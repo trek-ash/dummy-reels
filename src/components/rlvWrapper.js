@@ -4,23 +4,18 @@ import {RecyclerListView, DataProvider, LayoutProvider } from 'recyclerlistview'
 import axios from 'axios';
 import streamigVideosApi from '../api/streamingVideos'
 import MyVideo from './MyVideo';
+import colorGenerator from '../utils/colors'
 
 const RLVWrapper = () => {
     
     let { width, height } = Dimensions.get('window');
-    const [data, updateData] = useState(['ABC', 'DEF'])
-    const [pageNo, setpageNo] = useState(0)
+    const [data, updateData] = useState(['dummyData'])
+    const [pageNo, setpageNo] = useState(0)  
     
-    const onEndReached = () =>  {
-        console.log("New page");
-        setpageNo(pageNo+1)
-    }
-
     useEffect(() => {
         
         (async ()=>{
             try {
-                console.log("pageChanged", pageNo);
                 
                 let newPageResData = await fetchVideos(pageNo)
                 let newData = null
@@ -31,19 +26,22 @@ const RLVWrapper = () => {
                     newData = [...data, ...newPageResData.data]
                 updateData(newData)
             } catch (error) {
-                console.log(error);
-                
+                // Handle error in fetching data
             }
         })()
         
     }, [pageNo])
+
+    const onEndReached = () =>  {
+        setpageNo(pageNo+1)
+    }
 
     const fetchVideos = async (pageNo) => {
         return await axios.post(streamigVideosApi.playbackVideoUrls, {"page": pageNo})
     }
 
     const dataDataProvider = new DataProvider((r1, r2) => {
-      return r1 !== r2;
+      return r1.playbackUrl !== r2.playbackUrl;
     }).cloneWithRows(data);
     
     const layoutProvider = new LayoutProvider(
@@ -57,12 +55,14 @@ const RLVWrapper = () => {
   
     const rowRenderer = (type, data) => {
         if (data.playbackUrl)
-            return <>
-                    <Text>{data.playbackUrl}</Text>
+            return <View style={{backgroundColor: colorGenerator(), height: "100%"}}>
+                    <Text></Text>
                     <MyVideo url={data.playbackUrl} />
-                    </>;
+                    </View>;
         else
-            return <></>
+            return <>
+                        <Text>Entertainment Loading...</Text>
+                    </>
     };
 
     return (  
@@ -71,7 +71,7 @@ const RLVWrapper = () => {
           display: "flex",
           flex: 1,
           width: width,
-          height: '100%'
+          height: '100%',
         }}
       >
         <RecyclerListView
